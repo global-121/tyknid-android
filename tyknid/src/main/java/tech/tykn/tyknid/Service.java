@@ -20,6 +20,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -44,7 +45,7 @@ public class Service {
         }
 
     }
-    public String createPoolLedgerConfig(File genesisTxnFile) {
+    private String createPoolLedgerConfig(File genesisTxnFile) {
         Log.d(TAG, "createPoolLedgerConfig() called with: genesisTxnFile = [" + genesisTxnFile + "]");
         PoolJSONParameters.CreatePoolLedgerConfigJSONParameter createPoolLedgerConfigJSONParameter
                 = new PoolJSONParameters.CreatePoolLedgerConfigJSONParameter(genesisTxnFile.getAbsolutePath());
@@ -225,17 +226,89 @@ public class Service {
         JSONArray requestedAttributesJSON = proofRequestJSON.getJSONArray("requested_attributes");
         JSONArray requestedPredicatesJSON = proofRequestJSON.getJSONArray("requested_predicates");
 
+        ArrayList schemaIds = new ArrayList<String>();
+        ArrayList credentialDefIds = new ArrayList<String>();
+        JSONObject credentials = new JSONObject();
+        JSONObject schemas = new JSONObject();
+        JSONObject credDefs = new JSONObject();
+        JSONObject credentialAttributeReferants = new JSONObject();
         for (int attrIndex = 0; attrIndex < requestedAttributesJSON.length(); attrIndex++) {
-            String attribute = requestedAttributesJSON.getString(attrIndex);
-            if (searchValueInJSONArray(attribute, attributesJSON)) {
-//                JSONObject credentialOptions = attributesJSON.getJSONObject();
+            String attributeName = requestedAttributesJSON.getString(attrIndex);
+            if (searchValueInJSONArray(attributeName, attributesJSON)) {
+                JSONObject credentialOptions = attributesJSON.getJSONObject(0);
+                if(credentialOptions != null){
+                    JSONObject cred = credentialOptions.getJSONObject("cred_info");
+                    String referant = cred.getString("referent");
+                    String schemaId = cred.getString("schema_id");
+                    schemaIds.add(schemaId);
+                    String credentialDefId = cred.getString("cred_def_id");
+                    credentialDefIds.add(credentialDefId);
+                    JSONObject credentialAttributeReferant = new JSONObject();
+                    credentialAttributeReferant.put("cred_id",referant);
+                    credentialAttributeReferant.put("revealed",true);
+                    credentialAttributeReferants.put(attributeName,credentialAttributeReferant);
+                }
+
             }
         }
+        JSONObject credentialPredeicateReferants = new JSONObject();
+        for (int predicateIndex = 0; predicateIndex < requestedPredicatesJSON.length(); predicateIndex++) {
+            String predicateName = requestedPredicatesJSON.getString(predicateIndex);
+            if (searchValueInJSONArray(predicateName, predicatesJSON)) {
+                JSONObject credentialOptions = predicatesJSON.getJSONObject(0);
+                if(credentialOptions != null){
+                    JSONObject cred = credentialOptions.getJSONObject("cred_info");
+                    String referant = cred.getString("referent");
+                    String schemaId = cred.getString("schema_id");
+                    schemaIds.add(schemaId);
+                    String credentialDefId = cred.getString("cred_def_id");
+                    credentialDefIds.add(credentialDefId);
+                    JSONObject credentialPredeicateReferant = new JSONObject();
+                    credentialPredeicateReferant.put("cred_id",referant);
+                    credentialPredeicateReferants.put(predicateName,credentialPredeicateReferant);
+                }
 
-        String requestCredentialsJsonString = "";
-        String schemasJsonString = "";
-        String credDefsJsonString = "";
-        Anoncreds.proverCreateProof(wallet, proofRequest, requestCredentialsJsonString, MASTER_SECRET_KEY, schemasJsonString, credDefsJsonString, "{}");
+            }
+        }
+        credentials.put("self_attested_attributes", new JSONObject());
+        credentials.put("requested_attributes", credentialAttributeReferants);
+        credentials.put("requested_predicates", credentialPredeicateReferants);
+
+        for (int schemaIndex = 0; schemaIndex < schemaIds.size(); schemaIndex++) {
+            String schemaId = schemaIds.get(schemaIndex).toString();
+            try{
+                String schemaRequestJson = Ledger.buildGetSchemaRequest("",schemaId).get();
+                String schemaResponseJson = Ledger.submitRequest(pool,schemaRequestJson).get();
+                LedgerResults.ParseResponseResult result = Ledger.parseGetSchemaResponse(schemaResponseJson).get();
+                schemas.put(schemaId,result.getObjectJson());
+            }catch(IndyException e) {
+                Log.e(TAG, "createProof: unable to get schemas", e );
+            }
+
+        }
+
+        for (int credDefIndex = 0; credDefIndex < credentialDefIds.size(); credDefIndex++) {
+            String credDefinationId = credentialDefIds.get(credDefIndex).toString();
+            try{
+                String credDefRequestJson = Ledger.buildGetCredDefRequest("",credDefinationId).get();
+                String credDefResponseJson = Ledger.submitRequest(pool,credDefRequestJson).get();
+                LedgerResults.ParseResponseResult result = Ledger.parseGetCredDefResponse(credDefResponseJson).get();
+                credDefs.put(credDefinationId,result.getObjectJson());
+            }catch(IndyException e) {
+                Log.e(TAG, "createProof: unable to get credentialDefination", e );
+            }
+
+        }
+        closePool();
+
+        Anoncreds.proverCreateProof(
+                wallet,
+                proofRequest,
+                credentials.toString(),
+                MASTER_SECRET_KEY,
+                schemas.toString(),
+                credDefs.toString(),
+                "{}");
 
     }
 }
