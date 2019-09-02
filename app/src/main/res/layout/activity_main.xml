@@ -126,16 +126,6 @@
         app:layout_constraintTop_toBottomOf="@+id/btnRqstCred"
         tools:layout_editor_absoluteX="18dp" />
 
-    <TextView
-        android:id="@+id/textView4"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginBottom="4dp"
-        android:text="Logs"
-        app:layout_constraintBottom_toTopOf="@+id/logbox"
-        app:layout_constraintStart_toStartOf="parent" />
-
     <ImageView
         android:id="@+id/imageView"
         android:layout_width="wrap_content"
@@ -145,13 +135,13 @@
         app:srcCompat="@mipmap/tykn_logo_round"
         tools:layout_editor_absoluteY="0dp" />
 
-    <TextView
-        android:id="@+id/logbox"
-        android:layout_width="387dp"
-        android:layout_height="284dp"
-        android:scrollbarStyle="insideInset"
-        android:text="TextView"
-        android:scrollbars = "vertical"
+    <EditText
+        android:id="@+id/statusBox"
+        android:layout_width="410dp"
+        android:layout_height="259dp"
+        android:ems="10"
+        android:inputType="textPersonName"
+        android:text="Name"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
