@@ -1,2 +1,1 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="tech.tykn.tyknid" />
+<manifest package="tech.tykn.tyknid" />

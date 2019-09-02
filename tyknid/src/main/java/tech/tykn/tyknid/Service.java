@@ -1,27 +1,25 @@
 package tech.tykn.tyknid;
 
-import android.system.ErrnoException;
-import android.system.Os;
-import android.text.InputFilter;
 import android.util.Log;
 
 import org.hyperledger.indy.sdk.ErrorCode;
 import org.hyperledger.indy.sdk.IndyException;
 import org.hyperledger.indy.sdk.LibIndy;
-import org.hyperledger.indy.sdk.anoncreds.AnoncredsResults;
+import org.hyperledger.indy.sdk.anoncreds.Anoncreds;
+import org.hyperledger.indy.sdk.anoncreds.AnoncredsResults.ProverCreateCredentialRequestResult;
 import org.hyperledger.indy.sdk.did.Did;
 import org.hyperledger.indy.sdk.did.DidResults;
 import org.hyperledger.indy.sdk.ledger.Ledger;
 import org.hyperledger.indy.sdk.ledger.LedgerResults;
 import org.hyperledger.indy.sdk.pool.Pool;
+import org.hyperledger.indy.sdk.pool.PoolJSONParameters;
+import org.hyperledger.indy.sdk.pool.PoolLedgerConfigExistsException;
 import org.hyperledger.indy.sdk.wallet.Wallet;
-import org.hyperledger.indy.sdk.anoncreds.Anoncreds;
-import org.hyperledger.indy.sdk.anoncreds.AnoncredsResults.ProverCreateCredentialRequestResult;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.Date;
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -33,8 +31,9 @@ public class Service {
     private Boolean isWalletOpen = false;
     private Pool __pool = null;
     private final String MASTER_SECRET_KEY = "masterSecret";
-    private final String POOL_CONFIG_NAME = "pool_config_name";
+    private final String DEFAULT_POOL_NAME = "default_pool";
     final String RUNTIME_CONFIG = "{\"collect_backtrace\": true}";
+    public static final int PROTOCOL_VERSION = 2;
 
     private void libindyInit(){
 
@@ -45,22 +44,54 @@ public class Service {
         }
 
     }
-    private Pool openPool(String poolConfig) throws IndyException, ExecutionException, InterruptedException {
-        if (__pool != null) {
-            __pool = Pool.openPoolLedger(POOL_CONFIG_NAME, poolConfig).get();
+    public String createPoolLedgerConfig(File genesisTxnFile) {
+        Log.d(TAG, "createPoolLedgerConfig() called with: genesisTxnFile = [" + genesisTxnFile + "]");
+        PoolJSONParameters.CreatePoolLedgerConfigJSONParameter createPoolLedgerConfigJSONParameter
+                = new PoolJSONParameters.CreatePoolLedgerConfigJSONParameter(genesisTxnFile.getAbsolutePath());
+        try{
+            Pool.createPoolLedgerConfig(DEFAULT_POOL_NAME, createPoolLedgerConfigJSONParameter.toJson()).get();
+        }catch(java.util.concurrent.ExecutionException | PoolLedgerConfigExistsException e){
+            Log.e(TAG, "createPoolLedgerConfig: unable to create pool config due to ::", e );
+        } catch (InterruptedException | IndyException e) {
+            e.printStackTrace();
+        }
+
+        return DEFAULT_POOL_NAME;
+    }
+    private Pool openPool(File poolConfig) throws IndyException, ExecutionException, InterruptedException {
+        Log.d(TAG, "openPool() called with: poolConfig = [" + poolConfig + "]");
+        Pool.setProtocolVersion(PROTOCOL_VERSION);
+        try{
+            createPoolLedgerConfig(poolConfig);
+        }catch(Throwable e){
+            Log.e(TAG, "createPoolLedgerConfig: unable to create pool config due to ::", e );
+        }
+
+        PoolJSONParameters.OpenPoolLedgerJSONParameter config = new PoolJSONParameters.OpenPoolLedgerJSONParameter(null, null);
+        if (__pool == null) {
+            __pool = Pool.openPoolLedger(DEFAULT_POOL_NAME, config.toJson()).get();
         }
         return __pool;
 
     }
+    private void closePool() throws InterruptedException, ExecutionException, IndyException {
+        Log.d(TAG, "closePool() called");
+        if(__pool!=null){
+            __pool.close();
+            __pool = null;
+        }
+    }
 
     private void closeWallet() throws InterruptedException, ExecutionException, IndyException {
+        Log.d(TAG, "closeWallet() called");
         if(__wallet!=null && isWalletOpen){
             __wallet.close();
             isWalletOpen = false;
         }
     }
 
-    private Wallet openWallet(Map<String, String> walletConfig) throws IndyException {
+    private Wallet openWallet(Map<String, String> walletConfig) {
+        Log.d(TAG, "openWallet() called with: walletConfig = [" + walletConfig + "]");
         if ( !isWalletOpen) {
             try {
                 __wallet = Wallet.openWallet(walletConfig.get("config"),walletConfig.get("creds")).get();
@@ -81,6 +112,7 @@ public class Service {
 
 
     private Map<String, String> getWalletConfig(String walletName, String walletKey) {
+        Log.d(TAG, "getWalletConfig() called with: walletName = [" + walletName + "], walletKey = [" + walletKey + "]");
         final String WALLET_CONFIG = "{ \"id\":\"" + walletName + "\"}";
         final String WALLET_CREDENTIALS = "{\"key\":\"" + walletKey + "\"}";
         Map<String, String> config = new HashMap<>();
@@ -89,11 +121,13 @@ public class Service {
         return config;
     }
     public void deleteWallet(String walletName, String walletKey) throws IndyException, ExecutionException, InterruptedException {
+        Log.d(TAG, "deleteWallet() called with: walletName = [" + walletName + "], walletKey = [" + walletKey + "]");
         closeWallet();
         Wallet.deleteWallet(getWalletConfig(walletName,walletKey).get("config"),getWalletConfig(walletName,walletKey).get("creds")).get();
     }
 
     public void createWallet(String walletName, String walletKey) throws WalletCreationException, WalletAlreadyExistException, IndyException, ExecutionException, InterruptedException {
+        Log.d(TAG, "createWallet() called with: walletName = [" + walletName + "], walletKey = [" + walletKey + "]");
         libindyInit();
         Wallet wallet = null;
 
@@ -126,6 +160,7 @@ public class Service {
     }
 
     public DID generatePADID(String walletName, String walletKey) throws IndyException, ExecutionException, InterruptedException {
+        Log.d(TAG, "generatePADID() called with: walletName = [" + walletName + "], walletKey = [" + walletKey + "]");
         Wallet wallet = null;
         wallet = openWallet(getWalletConfig(walletName, walletKey));
         DidResults.CreateAndStoreMyDidResult __did = Did.createAndStoreMyDid(wallet, "{}").get();
@@ -137,34 +172,32 @@ public class Service {
 
         return _did;
     }
-
-    public ProverCreateCredentialRequestResult createCredentialRequest(String walletName, String walletKey, String poolConfig, String DID, String credDefId, String credDefOfferJson) throws IndyException, ExecutionException, InterruptedException {
-
-        Wallet wallet = openWallet(getWalletConfig(walletName, walletKey));
+    private String buildCredDefResponseFromLedger(File poolConfig,String DID,String credDefId) throws InterruptedException, ExecutionException, IndyException {
+        Log.d(TAG, "buildCredDefResponseFromLedger() called with: poolConfig = [" + poolConfig + "], DID = [" + DID + "], credDefId = [" + credDefId + "]");
         Pool pool = openPool(poolConfig);
-        String credDefRequestJson = Ledger.buildCredDefRequest(DID, credDefId).get();
+        String credDefRequestJson = Ledger.buildGetCredDefRequest(DID, credDefId).get();
         String credDefResponseJson = Ledger.submitRequest(pool, credDefRequestJson).get();
-        pool.close();
+        closePool();
         LedgerResults.ParseResponseResult resp = Ledger.parseGetCredDefResponse(credDefResponseJson).get();
+        return resp.getObjectJson();
 
-        resp.getObjectJson();
+    }
 
+    public ProverCreateCredentialRequestResult createCredentialRequest(String walletName, String walletKey, File poolConfig, String DID, String credDefId, String credDefOfferJson) throws IndyException, ExecutionException, InterruptedException {
+        Log.d(TAG, "createCredentialRequest() called with: walletName = [" + walletName + "], walletKey = [" + walletKey + "], poolConfig = [" + poolConfig + "], DID = [" + DID + "], credDefId = [" + credDefId + "], credDefOfferJson = [" + credDefOfferJson + "]");
+        Wallet wallet = openWallet(getWalletConfig(walletName, walletKey));
+        String CredDefResponse = buildCredDefResponseFromLedger(poolConfig,DID,credDefId);
         ProverCreateCredentialRequestResult result =
-                Anoncreds.proverCreateCredentialReq(wallet, DID, credDefOfferJson, resp.getObjectJson(), MASTER_SECRET_KEY).get();
+                Anoncreds.proverCreateCredentialReq(wallet, DID, credDefOfferJson, CredDefResponse, MASTER_SECRET_KEY).get();
        closeWallet();
         return result;
     }
 
-    public void saveCredential(String walletName, String walletKey, String poolConfig, String credDefId, String credDefRequestJson, String credJson) throws IndyException, ExecutionException, InterruptedException {
-
+    public void saveCredential(String walletName, String walletKey, File poolConfig,String DID,  String credDefId, String credDefRequestJson, String credJson) throws IndyException, ExecutionException, InterruptedException {
+        Log.d(TAG, "saveCredential() called with: walletName = [" + walletName + "], walletKey = [" + walletKey + "], poolConfig = [" + poolConfig + "], DID = [" + DID + "], credDefId = [" + credDefId + "], credDefRequestJson = [" + credDefRequestJson + "], credJson = [" + credJson + "]");
         Wallet wallet = openWallet(getWalletConfig(walletName, walletKey));
-        Pool pool = openPool(poolConfig);
-        String _credDefRequestJson = Ledger.buildCredDefRequest("", credDefId).get();
-        String credDefResponseJson = Ledger.submitRequest(pool, credDefRequestJson).get();
-        pool.close();
-        LedgerResults.ParseResponseResult resp = Ledger.parseGetCredDefResponse(credDefResponseJson).get();
-
-        Anoncreds.proverStoreCredential(wallet, credDefId, credDefRequestJson, resp.getObjectJson(), credJson, "");
+        String CredDefResponse = buildCredDefResponseFromLedger(poolConfig,DID,credDefId);
+        Anoncreds.proverStoreCredential(wallet, credDefId, credDefRequestJson, CredDefResponse, credJson, "");
 
 
     }
@@ -177,7 +210,7 @@ public class Service {
         return found;
     }
 
-    public void createProof(String walletName, String walletKey, String poolConfig, String credDefId, String proofRequest) throws IndyException, JSONException, ExecutionException, InterruptedException {
+    public void createProof(String walletName, String walletKey, File poolConfig, String credDefId, String proofRequest) throws IndyException, JSONException, ExecutionException, InterruptedException {
 
         Wallet wallet = openWallet(getWalletConfig(walletName, walletKey));
         Pool pool = openPool(poolConfig);
