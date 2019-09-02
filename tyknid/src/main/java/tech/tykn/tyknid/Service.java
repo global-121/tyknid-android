@@ -301,14 +301,21 @@ public class Service {
         }
         closePool();
 
-        Anoncreds.proverCreateProof(
+
+        String proofJson = Anoncreds.proverCreateProof(
                 wallet,
                 proofRequest,
                 credentials.toString(),
                 MASTER_SECRET_KEY,
                 schemas.toString(),
                 credDefs.toString(),
-                "{}");
+                "{}").get();
+
+        Proof proof = new Proof();
+        proof.setProofJson(proofJson);
+        proof.setSchemaIds(schemaIds);
+        proof.setCredDefinationIds(credentialDefIds);
+
 
     }
 }
