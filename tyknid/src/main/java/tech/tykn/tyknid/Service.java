@@ -220,7 +220,7 @@ public class Service {
 
     }
 
-    public Proof createProof(String walletName, String walletKey, File poolConfig, String credDefId, String proofRequest) throws IndyException, JSONException, ExecutionException, InterruptedException {
+    public ProofResult createProof(String walletName, String walletKey, File poolConfig, String credDefId, String proofRequest) throws IndyException, JSONException, ExecutionException, InterruptedException {
 
         Log.d(TAG, "createProof() called with: walletName = [" + walletName + "], walletKey = [" + walletKey + "], poolConfig = [" + poolConfig + "], credDefId = [" + credDefId + "], proofRequest = [" + proofRequest + "]");
         Wallet wallet = openWallet(getWalletConfig(walletName, walletKey));
@@ -309,7 +309,7 @@ public class Service {
                 String schemaRequestJson = Ledger.buildGetSchemaRequest("GyQyAmN1uyMG4TYS9MiyPW", schemaId).get();
                 String schemaResponseJson = Ledger.submitRequest(pool, schemaRequestJson).get();
                 LedgerResults.ParseResponseResult result = Ledger.parseGetSchemaResponse(schemaResponseJson).get();
-                schemas.put(schemaId, result.getObjectJson());
+                schemas.put(schemaId, new JSONObject(result.getObjectJson()));
             } catch (IndyException e) {
                 Log.e(TAG, "createProof: unable to get schemas", e);
             }
@@ -322,7 +322,7 @@ public class Service {
                 String credDefRequestJson = Ledger.buildGetCredDefRequest(null, credDefinationId).get();
                 String credDefResponseJson = Ledger.submitRequest(pool, credDefRequestJson).get();
                 LedgerResults.ParseResponseResult result = Ledger.parseGetCredDefResponse(credDefResponseJson).get();
-                credDefs.put(credDefinationId, result.getObjectJson());
+                credDefs.put(credDefinationId, new JSONObject(result.getObjectJson()));
             } catch (IndyException e) {
                 Log.e(TAG, "createProof: unable to get credentialDefination", e);
             }
@@ -347,7 +347,11 @@ public class Service {
         proof.setSchemaIds(schemaIds);
         proof.setCredDefinationIds(credentialDefIds);
 
-        return proof;
+
+        ProofResult result = new ProofResult();
+        result.setProof(proof);
+        result.setProofRequestJsonData(proofRequest);
+        return result;
 
 
     }

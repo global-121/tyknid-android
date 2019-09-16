@@ -30,6 +30,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import tech.tykn.tyknid.DID;
 import tech.tykn.tyknid.Proof;
+import tech.tykn.tyknid.ProofResult;
 import tech.tykn.tyknid.Service;
 import tech.tykn.tyknid.WalletAlreadyExistException;
 import tech.tykn.tyknid.WalletCreationException;
@@ -165,8 +166,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 try {
-                    Proof proof = tyknService.createProof("testWallet", "test", configFile, credDefId, proofRequest);
-                    String displaytext = String.format("proofJson: %s schemaIds: %s credDefids: %s", proof.getProofJson(), proof.getSchemaIds(), proof.getCredDefinationIds());
+                    ProofResult proof = tyknService.createProof("testWallet", "test", configFile, credDefId, proofRequest);
+                    String displaytext = String.format("proofJson: %s schemaIds: %s credDefids: %s", proof.getProof().getProofJson(), proof.getProof().getSchemaIds(), proof.getProof().getCredDefinationIds());
                     Log.i(TAG, displaytext);
                     statusBox.setText(displaytext);
                 } catch (IndyException | InterruptedException | ExecutionException | JSONException e) {
@@ -243,9 +244,6 @@ public class MainActivity extends AppCompatActivity {
                 .post(body0)
                 .addHeader("Content-Type", "application/json")
                 .addHeader("Accept", "application/json")
-                .addHeader("User-Agent", "PostmanRuntime/7.17.1")
-                .addHeader("Cache-Control", "no-cache")
-                .addHeader("Postman-Token", "33fe50ce-ca5d-41a3-ad8f-97714b931855,aabec117-a853-4b0c-9300-1a610c6121de")
                 .addHeader("Host", "10.0.0.3:50001")
                 .addHeader("Accept-Encoding", "gzip, deflate")
                 .addHeader("Content-Length", "106")
@@ -264,9 +262,6 @@ public class MainActivity extends AppCompatActivity {
                 .post(body1)
                 .addHeader("Content-Type", "application/json")
                 .addHeader("Accept", "application/json")
-                .addHeader("User-Agent", "PostmanRuntime/7.17.1")
-                .addHeader("Cache-Control", "no-cache")
-                .addHeader("Postman-Token", "2cb2db50-7ba6-4f8d-bba0-9579c7757ff7,561c80a8-5449-4fe0-a6a5-516b9371d0c0")
                 .addHeader("Host", "10.0.0.4:50002")
                 .addHeader("Accept-Encoding", "gzip, deflate")
                 .addHeader("Content-Length", "93")
@@ -286,9 +281,6 @@ public class MainActivity extends AppCompatActivity {
                 .post(body2)
                 .addHeader("Content-Type", "application/json")
                 .addHeader("Accept", "application/json")
-                .addHeader("User-Agent", "PostmanRuntime/7.17.1")
-                .addHeader("Cache-Control", "no-cache")
-                .addHeader("Postman-Token", "2aa02184-a8ca-40da-b809-333a6c6d3880,42761028-21ce-47ca-a2dd-fd5ce40b4ef5")
                 .addHeader("Host", "10.0.0.4:50002")
                 .addHeader("Accept-Encoding", "gzip, deflate")
                 .addHeader("Content-Length", "128")
@@ -324,8 +316,6 @@ public class MainActivity extends AppCompatActivity {
                 .post(body3)
                 .addHeader("Content-Type", "application/json")
                 .addHeader("Accept", "application/json")
-                .addHeader("User-Agent", "PostmanRuntime/7.17.1")
-                .addHeader("Cache-Control", "no-cache")
                 .addHeader("Host", "10.0.0.4:50002")
                 .addHeader("Accept-Encoding", "gzip, deflate")
                 .addHeader("Content-Length", "5256")
@@ -338,10 +328,9 @@ public class MainActivity extends AppCompatActivity {
         String credJson = new JSONObject(issueCredResponse.body().string()).getString("credential");
 
         Log.d(TAG, "received " + issueCredResponse);
-
-        tyknService.saveCredential(walletName, walletKey, configFile, "GyQyAmN1uyMG4TYS9MiyPW", "U8iuDVKHUXRYRCRPDwqTsu:3:CL:12:age_proof", credReqFromPA.getCredentialRequestMetadataJson(), credJson);
+        tyknService.saveCredential(walletName, walletKey, configFile, paDID.getDID(), credDefId, credReqFromPA.getCredentialRequestMetadataJson(), credJson);
         String proofRequest = "{\"nonce\": \"123\",\"name\": \"proof_req_1\",\"version\": \"0.1\",\"requested_predicates\":{},\"non_revoked\":{},\"requested_attributes\": {\"attr1_referent\": {\"name\": \"name\"}}}";
-        Proof proof = tyknService.createProof(walletName,walletKey,configFile,credDefId, proofRequest);
+        Proof proof = tyknService.createProof(walletName,walletKey,configFile,"U8iuDVKHUXRYRCRPDwqTsu:3:CL:12:age_proof", proofRequest).getProof();
         Log.d(TAG, "proof : >> " + proof.getProofJson());
 
     }

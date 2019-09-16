@@ -129,10 +129,10 @@
 
     <Button
         android:id="@+id/runTestSequence"
-        android:layout_width="165dp"
-        android:layout_height="57dp"
-        android:layout_marginTop="52dp"
-        android:layout_marginEnd="16dp"
+        android:layout_width="187dp"
+        android:layout_height="116dp"
+        android:layout_marginTop="32dp"
+        android:layout_marginEnd="8dp"
         android:text="Run test sequence"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/poolip" />

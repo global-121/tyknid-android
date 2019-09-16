@@ -35,15 +35,3 @@ public class Proof {
     private ArrayList<String> credDefinationIds;
 
 }
-//{
-//        "nonce": "123",
-//        "name": "proof_req_1",
-//        "version": "0.1",
-//        "requested_predicates": {},
-//        "non_revoked": {},
-//        "requested_attributes": {
-//        "attr1_referent": {
-//        "name": "name"
-//        }
-//        }
-//        }
