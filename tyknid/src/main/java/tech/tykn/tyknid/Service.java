@@ -156,7 +156,6 @@ public class Service {
         wallet = openWallet(getWalletConfig(walletName, walletKey));
         if (wallet != null) {
             String masterSecret = Anoncreds.proverCreateMasterSecret(wallet, MASTER_SECRET_KEY).get();
-            Log.d(TAG, "createWallet: mastersecret created >> " + masterSecret);
             closeWallet();
         } else {
             Log.d(TAG, "PANIC: createWallet: wallet is not open");
@@ -206,7 +205,6 @@ public class Service {
         Wallet wallet = openWallet(getWalletConfig(walletName, walletKey));
         String CredDefResponse = getCredentialDefinationFromLedger(poolConfig, DID, credDefId);
 
-        LibIndy.setRuntimeConfig("{\"collect_backtrace\":true}");
         Log.d(TAG, "credential response from ledger: " + CredDefResponse);
         String result = Anoncreds.proverStoreCredential(
                 wallet,
@@ -269,8 +267,6 @@ public class Service {
             }
         }
 
-
-        Log.d(TAG, "credAttributes: " + credentialAttributeReferants.toString());
         JSONObject credentialPredicateReferants = new JSONObject();
 
         if (requestedPredicatesJSON.names() != null) {
@@ -295,9 +291,6 @@ public class Service {
                 }
             }
         }
-
-
-        Log.d(TAG, "predicateAttributes: " + credentialPredicateReferants.toString());
 
         credentials.put("self_attested_attributes", new JSONObject());
         credentials.put("requested_attributes", credentialAttributeReferants);
@@ -330,8 +323,6 @@ public class Service {
         }
         closePool();
 
-
-        Log.d(TAG, "creds>>>>>> " + credentials.toString() + ">>" + schemas.toString() + ">>" + credDefs.toString());
 
         String proofJson = Anoncreds.proverCreateProof(
                 wallet,
