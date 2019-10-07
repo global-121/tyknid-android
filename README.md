@@ -1,6 +1,12 @@
 # tyknid-android
 Android wrapper for Tykn ID
 
+## Requirements:
+1. docker-compose
+2. android studio
+
+## Setup
+
 - Build libindy wrapper for Android from [here](https://github.com/faisal00813/indy-sdk/blob/libindy-android-wrapper/wrappers/android/README.md)
 - Copy aar in `libindy` folder
 - Update the aar name in libindy module here `artifacts.add("default", file('com.hyperledger-libindy_1.0.0-23-08-2019T05-55_x86-armv7-debug.aar'))`
@@ -31,3 +37,20 @@ Runtime warnings in console:
  or
  ```No Network Security Config specified, using platform default```
  Make sure the SSI services are running and are reachable.
+
+ ## Automated tests
+ checkout [121-platform](https://github.com/global-121/121-platform)
+ To run the automated tests make sure your working directory looks like this
+ 121-platform should be in the same directory where the tyknid-android is present.
+ The directory structure would look something like below
+
+```
+.
+├── 121-platform                   # 121-platform project
+├── tyknid-android                 # tyknid-android project
+
+```
+
+- Start the emulator
+- run test.sh in tyknid-android folder
+- Keep an eye on logcat to check the output from.
