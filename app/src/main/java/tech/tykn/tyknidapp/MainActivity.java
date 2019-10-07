@@ -337,6 +337,8 @@ public class MainActivity extends AppCompatActivity {
         Proof proof = tyknService.createProof(walletName,walletKey,configFile,"U8iuDVKHUXRYRCRPDwqTsu:3:CL:12:age_proof", proofRequest).getProof();
         Log.d(TAG, "proof : >> " + proof.getProofJson());
 
+        Log.d(TAG, "-->> TEST SUITE COMPLETE <<--");
+
     }
 
 
