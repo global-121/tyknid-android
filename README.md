@@ -8,7 +8,26 @@ Android wrapper for Tykn ID
 - The app expects the Tykn SSI System is running in the containers locally.
 - Run the compose file available [here](https://github.com/global-121/121-platform/blob/master/services/docker-compose.yml)
 - Run the compose file by executing `docker-compose run -build`
-- Run test app in emulator or actual device.
+
+Few assumptions are made while executing the tests using the app:
+    - TyknIms is running on `11.0.0.3:50001`
+    - OrgIms is running on `11.0.0.4:50002`
+    - IndyPool is running on `11.0.0.2`
+    - All the above ips are reachable from the app
+
+- Run test app in emulator (tests on actual device may not work with the assumptions made by above as the network on the actual device may not reach the docker network)
 - Press the `Test Run Sequence` button to run the sequence of steps from issuance of credential to generating proof.
 - Open and see steps being executed in Logcat.
-- Clean the containers after the test by executing `docker-compose down`
+- Clean the containers after the test by executing `docker-compose down` (PS: This needs to be done before each test run )
+
+Runtime warnings in console:
+ - Ignore
+ ``` java.util.concurrent.ExecutionException: org.hyperledger.indy.sdk.pool.PoolLedgerConfigExistsException: A pool ledger configuration already exists with the specified name.```
+ This error is gracefully handled in the code and is printed by the underlying indy wrapper for debugging purposes.
+ In production this should be suppressed using the logging backend used by the android app.
+
+ - If the TyknIms or OrgIms are not reachable OKHttp may print
+ ```Rejecting re-init on previously-failed class java.lang.Class<okhttp3.internal.platform.ConscryptPlatform$configureTrustManager$1>```
+ or
+ ```No Network Security Config specified, using platform default```
+ Make sure the SSI services are running and are reachable.

@@ -68,7 +68,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
 
         try {
-            configFile = createConfigFile("10.0.0.2");
+            configFile = createConfigFile("11.0.0.2");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -224,10 +224,18 @@ public class MainActivity extends AppCompatActivity {
 
         return super.onOptionsItemSelected(item);
     }
+    public String getTyknImsUrl(String path){
+        String TyknImsIp = "http://11.0.0.3:50001";
+        return TyknImsIp+path;
+    }
 
+    public String getOrgImsUrl(String path){
+        String OrgIms = "http://11.0.0.4:50002";
+        return OrgIms+path;
+    }
     public void doEverything(Service tyknService) throws JSONException, InterruptedException, ExecutionException, IndyException, WalletAlreadyExistException, WalletCreationException, IOException {
 
-        Log.d(TAG, "calling 10.0.0.3:50001/api/schema");
+        Log.d(TAG, "calling " + getTyknImsUrl("/api/schema"));
         OkHttpClient client = new OkHttpClient.Builder()
                 .connectTimeout(60, TimeUnit.SECONDS)
                 .writeTimeout(60, TimeUnit.SECONDS)
@@ -240,11 +248,11 @@ public class MainActivity extends AppCompatActivity {
         MediaType mediaType = MediaType.parse("application/json");
         RequestBody body0 = RequestBody.create(mediaType, "{\"name\": \"android_name_age\", \"version\": \"3.0\",\n   \"attributes\": [   \"name\",\"age\" ] \n }");
         Request schemarequest = new Request.Builder()
-                .url("http://10.0.0.3:50001/api/schema")
+                .url(getTyknImsUrl("/api/schema"))
                 .post(body0)
                 .addHeader("Content-Type", "application/json")
                 .addHeader("Accept", "application/json")
-                .addHeader("Host", "10.0.0.3:50001")
+                .addHeader("Host", "11.0.0.3:50001")
                 .addHeader("Accept-Encoding", "gzip, deflate")
                 .addHeader("Content-Length", "106")
                 .addHeader("Connection", "keep-alive")
@@ -255,14 +263,14 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG, "received " + schemaResponse);
         String schemaId = new JSONObject(schemaResponse.body().string()).getString("schema_id");
 
-        Log.d(TAG, "calling  10.0.0.4:50002/api/credential/definition");
+        Log.d(TAG, "calling  "+ getOrgImsUrl("/api/credential/definition"));
         RequestBody body1 = RequestBody.create(mediaType, "{\"name\": \"age_proof\",\n   \"schema_id\": \"" + schemaId + "\"\n }");
         Request createCedDefrequest = new Request.Builder()
-                .url("http://10.0.0.4:50002/api/credential/definition")
+                .url("http://11.0.0.4:50002/api/credential/definition")
                 .post(body1)
                 .addHeader("Content-Type", "application/json")
                 .addHeader("Accept", "application/json")
-                .addHeader("Host", "10.0.0.4:50002")
+                .addHeader("Host", "11.0.0.4:50002")
                 .addHeader("Accept-Encoding", "gzip, deflate")
                 .addHeader("Content-Length", "93")
                 .addHeader("Connection", "keep-alive")
@@ -273,15 +281,13 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG, "received " + createCedDefResponse);
         String credDefId = new JSONObject(createCedDefResponse.body().string()).getString("credential_definition_id");
 
-        Log.d(TAG, "calling 10.0.0.4:50002/api/credential/credoffer ");
-
+        Log.d(TAG, "calling"+ getOrgImsUrl("/api/credential/credoffer"));
         RequestBody body2 = RequestBody.create(mediaType, "{\"credDefID\":  \"" + credDefId + "\", \"correlation\": {  \"correlationID\": \"android\"} \n }");
         Request createCredOfferrequest = new Request.Builder()
-                .url("http://10.0.0.4:50002/api/credential/credoffer")
+                .url(getOrgImsUrl("/api/credential/credoffer"))
                 .post(body2)
                 .addHeader("Content-Type", "application/json")
                 .addHeader("Accept", "application/json")
-                .addHeader("Host", "10.0.0.4:50002")
                 .addHeader("Accept-Encoding", "gzip, deflate")
                 .addHeader("Content-Length", "128")
                 .addHeader("Connection", "keep-alive")
@@ -305,18 +311,16 @@ public class MainActivity extends AppCompatActivity {
         AnoncredsResults.ProverCreateCredentialRequestResult credReqFromPA = tyknService.createCredentialRequest(walletName, walletKey, configFile, paDID.getDID(), credDefId, credOffer);
 
 
-        Log.d(TAG, "calling 10.0.0.4:50002/api/credential/issue");
-
+        Log.d(TAG, "calling " + getOrgImsUrl("/api/credential/issue"));
         RequestBody body3 = RequestBody.create(mediaType, "{ \"credOfferJsonData\": \"" + credOffer.replace("\"","\\\"") + "\"," +
                 "\"credentialRequest\": \"" + credReqFromPA.getCredentialRequestJson().replace("\"","\\\"") + "\"," +
                 "\"correlation\": {  \"correlationID\": \"test\"}," +
                 "\"attributes\": {\"name\":\"sami\",\"age\":23} \n }");
         Request issueCredrequest = new Request.Builder()
-                .url("http://10.0.0.4:50002/api/credential/issue")
+                .url(getOrgImsUrl("/api/credential/issue"))
                 .post(body3)
                 .addHeader("Content-Type", "application/json")
                 .addHeader("Accept", "application/json")
-                .addHeader("Host", "10.0.0.4:50002")
                 .addHeader("Accept-Encoding", "gzip, deflate")
                 .addHeader("Content-Length", "5256")
                 .addHeader("Connection", "keep-alive")
