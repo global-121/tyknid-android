@@ -2,10 +2,10 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file:///run/media/sami/DATA/work/repos/tykn/tyknid-android/TyknId App.iml" filepath="/run/media/sami/DATA/work/repos/tykn/tyknid-android/TyknId App.iml" />
-      <module fileurl="file:///run/media/sami/DATA/work/repos/tykn/tyknid-android/app/app.iml" filepath="/run/media/sami/DATA/work/repos/tykn/tyknid-android/app/app.iml" />
-      <module fileurl="file:///run/media/sami/DATA/work/repos/tykn/tyknid-android/libindy/libindy.iml" filepath="/run/media/sami/DATA/work/repos/tykn/tyknid-android/libindy/libindy.iml" />
-      <module fileurl="file:///run/media/sami/DATA/work/repos/tykn/tyknid-android/tyknid/tyknid.iml" filepath="/run/media/sami/DATA/work/repos/tykn/tyknid-android/tyknid/tyknid.iml" />
+      <module fileurl="file://$PROJECT_DIR$/TyknId App.iml" filepath="$PROJECT_DIR$/TyknId App.iml" />
+      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libindy/libindy.iml" filepath="$PROJECT_DIR$/libindy/libindy.iml" />
+      <module fileurl="file://$PROJECT_DIR$/tyknid/tyknid.iml" filepath="$PROJECT_DIR$/tyknid/tyknid.iml" />
     </modules>
   </component>
 </project>
