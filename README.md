@@ -54,3 +54,9 @@ Runtime warnings in console:
 - Start the emulator
 - run test.sh in tyknid-android folder
 - Keep an eye on logcat to check the output from the app.
+
+---
+
+## License
+
+Released under the Apache 2.0 License. See [LICENSE](LICENSE).
